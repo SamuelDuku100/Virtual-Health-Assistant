@@ -4,66 +4,130 @@
     <title>Virtual Health Assistant</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f0f8ff; /* Light azure background */
         }
+        
         .chat-container {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 105, 148, 0.1);
+            border: 1px solid #d0e8f2;
         }
+
+        h1 {
+            color: #2b6777; /* Cadet blue */
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
         .message {
             margin: 15px 0;
-            padding: 10px 15px;
-            border-radius: 15px;
-            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 75%;
+            line-height: 1.6;
+            position: relative;
         }
+
         .user-message {
-            background-color: #e3f2fd;
+            background-color: #e8f4f8; /* Light blue */
             margin-left: auto;
+            border: 1px solid #c2e0ee;
+            border-right: 4px solid #2b6777;
         }
+
         .bot-message {
-            background-color: #f5f5f5;
+            background-color: #f5fffa; /* Mint cream */
             margin-right: auto;
+            border: 1px solid #d0f0c0;
+            border-left: 4px solid #3cb371;
         }
+
         #conversation {
             height: 60vh;
             overflow-y: auto;
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #d0e8f2;
+            border-radius: 10px;
+            background-color: #f8fbfe;
         }
+
         form {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            margin-top: 20px;
         }
+
         input[type="text"] {
             flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px 18px;
+            border: 1px solid #c2e0ee;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #2b6777;
         }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3cb371;
+            box-shadow: 0 0 0 2px rgba(60, 179, 113, 0.2);
+        }
+
         button {
-            padding: 10px 20px;
-            background-color: #007bff;
+            padding: 12px 24px;
+            background-color: #3cb371; /* Medium sea green */
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
         button:hover {
-            background-color: #0056b3;
+            background-color: #2b6777; /* Cadet blue */
+        }
+
+        /* Medical icon styling */
+        .medical-icon {
+            width: 32px;
+            height: 32px;
+            filter: invert(38%) sepia(29%) saturate(669%) hue-rotate(142deg) brightness(93%) contrast(88%);
+        }
+
+        /* Disclaimer text */
+        .disclaimer {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px solid #eee;
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <h1>Virtual Health Assistant</h1>
+        <h1>
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYjY3NzciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1jcm9zcyI+PGcgaWQ9InN2Z183Ij48cGF0aCBkPSJNMTEgMmgydjJoLTJaIi8+PHBhdGggZD0iTTExIDE2aDJ2MmgtMloiLz48cGF0aCBkPSJNMTYuNjYgNC42IDIwIDhsLTMuMzQgMy4zNCIvPjxwYXRoIGQ9Ik04IDhsMy4zNC0zLjM0Ii8+PHBhdGggZD0iTTE2IDhsLTMuMzQgMy4zNCIvPjxwYXRoIGQ9Ik04IDE2bDMuMzQtMy4zNCIvPjxwYXRoIGQ9Im0yIDhsNSA1Ii8+PHBhdGggZD0ibTE3IDggNSA1Ii8+PHBhdGggZD0ibTggMjIgNS01Ii8+PHBhdGggZD0ibTggMiA1IDUiLz48L2c+PC9zdmc+" 
+                 class="medical-icon" 
+                 alt="medical cross">
+            Virtual Health Assistant
+        </h1>
         <div id="conversation">
             {% for msg in conversation %}
                 <div class="message {% if msg.role == 'user' %}user-message{% else %}bot-message{% endif %}">
@@ -72,9 +136,15 @@
             {% endfor %}
         </div>
         <form method="POST" onsubmit="scrollToBottom()">
-            <input type="text" name="message" placeholder="Type your message..." required>
-            <button type="submit">Send</button>
+            <input type="text" name="message" placeholder="Type your health or fitness question..." required>
+            <button type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                Send
+            </button>
         </form>
+        <div class="disclaimer">
+            Note: This is not a substitute for professional medical advice. Always consult a healthcare provider.
+        </div>
     </div>
 
     <script>
@@ -82,7 +152,6 @@
             const conversationDiv = document.getElementById('conversation');
             conversationDiv.scrollTop = conversationDiv.scrollHeight;
         }
-        // Initial scroll to bottom
         window.onload = scrollToBottom;
     </script>
 </body>
