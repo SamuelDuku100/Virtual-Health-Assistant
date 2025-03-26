@@ -1,23 +1,22 @@
 
-
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
-import base64
 import os
 from flask import Flask, request, render_template, session
-from google import genai
+import google.generativeai as genai  # Correct import
 
-import google.generativeai as genai 
+# Initialize Flask app first
+app = Flask(__name__)
+# Use environment variable for secret key with fallback
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24))
 
+# Configure Gemini API
+if "GEMINI_API_KEY" not in os.environ:
+    raise ValueError("GEMINI_API_KEY not found in environment variables")
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Required for session management
-
-# Initialize GenAI client
-client = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY"),
-)
+# Initialize Gemini model
+model = genai.GenerativeModel('gemini-2.0-flash')  # Correct model initialization
 
 def initialize_conversation():
     """Initialize the conversation history"""
@@ -30,39 +29,29 @@ def initialize_conversation():
 
 def generate_response(user_input):
     """Generate response using Gemini API"""
-    contents = []
-    for msg in session['conversation']:
-        contents.append(types.Content(
-            role="user" if msg['role'] == "user" else "model",
-            parts=[types.Part.from_text(text=msg['text'])],
-        ))
+    try:
+        # Prepare conversation history
+        conversation = session.get('conversation', [])
+        history = [{'role': msg['role'], 'parts': [msg['text']]} for msg in conversation]
+        
+        # Add new user input
+        history.append({'role': 'user', 'parts': [user_input]})
+        
+        # Generate response
+        response = model.generate_content(
+            contents=history,
+            generation_config={
+                "temperature": 1,
+                "top_p": 0.95,
+                "top_k": 40,
+                "max_output_tokens": 8192
+            }
+        )
+        
+        return response.text
     
-    # Add new user input
-    contents.append(types.Content(
-        role="user",
-        parts=[types.Part.from_text(text=user_input)],
-    ))
-
-    generate_content_config = types.GenerateContentConfig(
-        temperature=1,
-        top_p=0.95,
-        top_k=40,
-        max_output_tokens=8192,
-        response_mime_type="text/plain",
-        system_instruction=[
-            types.Part.from_text(text="""(Your existing system instruction here)"""),
-        ],
-    )
-
-    full_response = ""
-    for chunk in client.models.generate_content_stream(
-        model="gemini-2.0-flash",
-        contents=contents,
-        config=generate_content_config,
-    ):
-        full_response += chunk.text
-
-    return full_response
+    except Exception as e:
+        return f"Error generating response: {str(e)}"
 
 @app.route('/', methods=['GET', 'POST'])
 def chat():
@@ -70,13 +59,25 @@ def chat():
         session['conversation'] = initialize_conversation()
     
     if request.method == 'POST':
+        if 'message' not in request.form:
+            return "Invalid request", 400
+            
         user_input = request.form['message']
-        bot_response = generate_response(user_input)
+        if not user_input.strip():
+            return "Message cannot be empty", 400
         
-        # Update conversation
-        session['conversation'].append({"role": "user", "text": user_input})
-        session['conversation'].append({"role": "model", "text": bot_response})
-        session.modified = True
+        try:
+            bot_response = generate_response(user_input)
+            
+            # Update conversation
+            session['conversation'].extend([
+                {"role": "user", "text": user_input},
+                {"role": "model", "text": bot_response}
+            ])
+            session.modified = True
+            
+        except Exception as e:
+            return f"Error processing request: {str(e)}", 500
     
     return render_template('chat.html', conversation=session['conversation'])
 
